@@ -2,8 +2,8 @@ const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const TELEGRAM_BOT_TOKEN = '8870357744:AAFnGoEMYdHkKP7vFOVzskUdm9FUa47xTHA';
-const TELEGRAM_CHAT_ID = '-5576351785';
+const TELEGRAM_BOT_TOKEN = '8660607160:AAF18Pm7hAz2K9FvJWJEwRczzpttkZvA174';
+const TELEGRAM_CHAT_ID = '-5464215045';
 
 // Memoria local ultrarrápida
 const sesiones = {};
